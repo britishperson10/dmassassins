@@ -5,6 +5,11 @@
 # Synopsis:  Files are saved to data folder under the name, then refined are saved to name_reined
 import sys, urllib.request, os, shutil, time, datetime
 global DEBUG
+FLAGS=["-d", "-s", "-p", "-o", "-O", "-h", "-r", "--help"]
+for x in sys.argv:
+    if x.startswith("-") and not x in FLAGS:
+        print(f"\"{x}\" is an unrecognised flag")
+        exit(1)
 if "-d" in sys.argv:
     DEBUG=True
 else:
