@@ -1,9 +1,9 @@
 #!/bin/python
-# 03/09/2022
-# Copyright (C) Joseph Rohani
-# Just realised that this shit might not work on Windows due to the goofy ass file system
+# September 03, 2022
+# Copyright (C) 2022 Joseph Rohani
+# Just realised that this shit might not work on Windows due to the goofy ass file system, also I know, excessive lib use
 # Synopsis:  Files are saved to data folder under the name, then refined are saved to name_reined
-import sys, urllib.request, os, shutil, time
+import sys, urllib.request, os, shutil, time, datetime
 global DEBUG
 if "-d" in sys.argv:
     DEBUG=True
@@ -14,9 +14,8 @@ class Flags:
         # l=0
         for x in argv:
             if x=="-h" or x=="--help":
-                print("--HELP PAGE--\nFlags:\n\t-h or --help:  This output\n\t-d:  Enable weird debug stuff that might be removed by the time I release this\n\t-s: The refined search data\n\t-o: Specify data output location, wouldn't recommend using this\n\t-r: if file exists, reuse it, can put \"r\" into the yes no prompt for same result\n\t-p: Print the output data to the terminal\n\nMade by Joseph Rohani")
+                print("--HELP PAGE--\nFlags:\n\t-h or --help:  This output\n\t-d:  Enable weird debug stuff that might be removed by the time I release this\n\t-s: The refined search data\n\t-o: Specify data output location, wouldn't recommend using this\n\t-r: if file exists, reuse it, can put \"r\" into the yes no prompt for same result\n\t-O: Overwrite existing file\n\t-p: Print the output data to the terminal\n\nMade by Joseph Rohani")
                 exit(0)
-
 def check_dir(path="data"):
     if not os.path.exists((path+"/")):
         os.mkdir(path)
@@ -30,13 +29,17 @@ def download(name, ow=False, path="data"):
         
         if DEBUG or "-r" in sys.argv:  pass
         else:
-            answer=input("The path exists, would you like to overwrite the path[y/N]:  ")
+            print(f"This file already exists, having last been edited at {datetime.datetime.fromtimestamp(os.path.getmtime(file_location))}")
+            answer=input("Would you like to overwrite the path[y/N]:  ")
             if answer.lower()=="y":
                 shutil.rmtree(f"{path}/{name}")
                 os.mkdir(f"data/{name}")
                 url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
+                start=time.time()
                 urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
+                end=time.time()
                 print(f"File saved to:  {location}")
+                print(f"Downloaded {os.path.getsize(file_location)} bytes in {round((end-start), 2)} seconds at a speed of {round((os.path.getsize(file_location))/(end-start), 1)}b/s")
             elif answer.lower()=="r":
                 pass
             else:
@@ -45,8 +48,11 @@ def download(name, ow=False, path="data"):
     else:
         os.mkdir(f"data/{name}")
         url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
+        start=time.time()
         urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
+        end=time.time()
         print(f"File saved to:  {location}")
+        print(f"Downloaded {os.path.getsize(file_location)} bytes in {round((end-start), 2)} seconds at a speed of {round((os.path.getsize(file_location))/(end-start), 1)}b/s")
 
     
 
