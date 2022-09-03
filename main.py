@@ -28,6 +28,15 @@ def download(name, ow=False, path="data"):
     if os.path.exists(location):
         
         if DEBUG or "-r" in sys.argv:  pass
+        elif "-O" in sys.argv:
+            shutil.rmtree(f"{path}/{name}")
+            os.mkdir(f"data/{name}")
+            url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
+            start=time.time()
+            urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
+            end=time.time()
+            print(f"File saved to:  {location}")
+            print(f"Downloaded {os.path.getsize(file_location)} bytes in {round((end-start), 2)} seconds at a speed of {round((os.path.getsize(file_location))/(end-start), 1)}b/s")
         else:
             print(f"This file already exists, having last been edited at {datetime.datetime.fromtimestamp(os.path.getmtime(file_location))}")
             answer=input("Would you like to overwrite the path[y/N]:  ")
