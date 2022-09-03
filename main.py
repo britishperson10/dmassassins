@@ -1,5 +1,8 @@
 #!/bin/python
+# 03/09/2022
 # Copyright (C) Joseph Rohani
+# Just realised that this shit might not work on Windows due to the goofy ass file system
+# Synopsis:  Files are saved to data folder under the name, then refined are saved to name_reined
 import sys, urllib.request, os, shutil, time
 global DEBUG
 if "-d" in sys.argv:
@@ -7,35 +10,38 @@ if "-d" in sys.argv:
 else:
     DEBUG=False
 class Flags:
-    def choose_flag(argc, argv):
+    def choose_flag(argv):
+        # l=0
         for x in argv:
             if x=="-h" or x=="--help":
-                print("")
+                print("--HELP PAGE--\nFlags:\n\t-h or --help:  This output\n\t-d:  Enable weird debug stuff that might be removed by the time I release this\n\t-s: The refined search data\n\t-o: Specify data output location, wouldn't recommend using this\n\t-r: if file exists, reuse it, can put \"r\" into the yes no prompt for same result\n\t-p: Print the output data to the terminal\n\nMade by Joseph Rohani")
+                exit(0)
 
 def check_dir(path="data"):
     if not os.path.exists((path+"/")):
         os.mkdir(path)
 
 def download(name, ow=False, path="data"):
-    global location, file_location
-    name_orig=name
+    global file_location, locationname
     name=name.lower()
     location=os.path.dirname(os.path.realpath(__file__))+"/data/"+name+"/"
     file_location=location+name
     if os.path.exists(location):
         
-        if DEBUG:  pass
-        elif input("The path exists, would you like to overwrite the path[y/N]:  ").lower()=="y":
-            shutil.rmtree(f"{path}/{name}")
-            os.mkdir(f"data/{name}")
-            url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
-            urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
-            print(f"File saved to:  {location}")
-        elif answer.lower()=="r":
-            pass
+        if DEBUG or "-r" in sys.argv:  pass
         else:
-            print("Closing program")
-            exit(0)
+            answer=input("The path exists, would you like to overwrite the path[y/N]:  ")
+            if answer.lower()=="y":
+                shutil.rmtree(f"{path}/{name}")
+                os.mkdir(f"data/{name}")
+                url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
+                urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
+                print(f"File saved to:  {location}")
+            elif answer.lower()=="r":
+                pass
+            else:
+                print("Closing program")
+                exit(0)
     else:
         os.mkdir(f"data/{name}")
         url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
@@ -45,33 +51,39 @@ def download(name, ow=False, path="data"):
     
 
 def sift(data):
-    print(location)
     file=open(file_location, "r")
     line_list=[]
+    data_list=[]
     for (i, line) in enumerate(file):
         line_upper=line.upper()
-        if data in line_upper:
+        if data in line_upper and i not in [0, 1]:
             line_list.append(i)
-    file_contents=file.readlines()
-    print(line_list)
-    print(file_contents)
-    print(file)
+    file.close()
     for x in line_list:
-        print(x)
-        print(file_contents[x])
-    
-    
+        data_list.append(open(file_location, "r").readlines()[x])
+    return data_list
 
-
+def save_addies(addies):
+    file=open(f"{file_location}_refined", "w")
+    for x in addies:
+        file.write(x+"\n")
+    file.close()
+Flags.choose_flag(sys.argv) #Just the help flag really, cannot be bothered for such a stupid project anyways
 check_dir()
-try:
-    name=sys.argv[1]
-except:
+if "-n" in sys.argv:
+    name=sys.argv[(sys.argv.index("-n"))+1]
+else:
     name=input("Please enter a name:  ")
-start=time.time()
-download(name) #Add sys flags
-print(time.time()-start)
-start=time.time()
-sift(input("data: ").upper())
-print(time.time()-start)
+if "-s" in sys.argv:
+    refine_data=sys.argv[(sys.argv.index("-s"))+1]
+else:
+    refine_data=input("Data to filter by:  ")
+download(name)
+addies=sift(refine_data.upper())
+save_addies(addies)
+if "-p" in sys.argv:
+    print()
+    for x in addies:    print(x, end="")
+
+
 
