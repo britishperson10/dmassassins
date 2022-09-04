@@ -1,11 +1,12 @@
 #!/bin/python
 # September 03, 2022
 # Copyright (C) 2022 Joseph Rohani
+# https://github.com/britishperson10/dmassassins
 # Just realised that this shit might not work on Windows due to the goofy ass file system, also I know, excessive lib use
 # Synopsis:  Files are saved to data folder under the name, then refined are saved to name_reined
 import sys, urllib.request, os, shutil, time, datetime
 global DEBUG
-FLAGS=["-d", "-s", "-p", "-o", "-O", "-h", "-r", "--help"]
+FLAGS=["-d", "-s", "-p", "-o", "-O", "-h", "-r", "--help", "-n", "-c", "-R"]
 for x in sys.argv:
     if x.startswith("-") and not x in FLAGS:
         print(f"\"{x}\" is an unrecognised flag")
@@ -14,45 +15,52 @@ if "-d" in sys.argv:
     DEBUG=True
 else:
     DEBUG=False
+if "-R" in sys.argv:
+    if input("Delete all data[y/N]:  ").lower()=="y": 
+        try: shutil.rmtree(".data")
+        except FileNotFoundError: print("Path didn't even exist")
+    else: print("Not deleted")
+    exit(0)
 class Flags:
     def choose_flag(argv):
         # l=0
         for x in argv:
             if x=="-h" or x=="--help":
-                print("--HELP PAGE--\nFlags:\n\t-h or --help:  This output\n\t-d:  Enable weird debug stuff that might be removed by the time I release this\n\t-s: The refined search data\n\t-o: Specify data output location, wouldn't recommend using this\n\t-r: if file exists, reuse it, can put \"r\" into the yes no prompt for same result\n\t-O: Overwrite existing file\n\t-p: Print the output data to the terminal\n\nMade by Joseph Rohani")
+                print("--HELP PAGE--\nFlags:\n\t-h or --help:  This output\n\t-n: Specifiy target name\n\t-d:  Enable weird debug stuff that might be removed by the time I release this\n\t-s: The refined search data\n\t-o: Specify data output location, wouldn't recommend using this\n\t-r: if file exists, reuse it, can put \"r\" into the yes no prompt for same result\n\t-O: Overwrite existing file\n\t-p: Print the output data to the terminal\n\t-c: Will open the address in either google maps or openstreetmap, defaulting to openstreetmap, with openstreetmaps as \"-c osm\" and google maps as\"-c gm\" and Google Eart as \"-c ge\"\n\t-R: Remove the .data folder\n\nMade by Joseph Rohani")
                 exit(0)
-def check_dir(path="data"):
+def check_dir(path=".data"):
     if not os.path.exists((path+"/")):
         os.mkdir(path)
 
-def download(name, ow=False, path="data"):
+def download(name, ow=False, path=".data"):
     global file_location, locationname
     name=name.lower()
-    location=os.path.dirname(os.path.realpath(__file__))+"/data/"+name+"/"
+    location=os.path.dirname(os.path.realpath(__file__))+"/.data/"+name+"/"
     file_location=location+name
     if os.path.exists(location):
-        
         if DEBUG or "-r" in sys.argv:  pass
         elif "-O" in sys.argv:
             shutil.rmtree(f"{path}/{name}")
-            os.mkdir(f"data/{name}")
-            url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
+            os.mkdir(f".data/{name}")
+            name_space=name.replace(" ", "%20")
+            url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name_space}"
             start=time.time()
             urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
             end=time.time()
-            print(f"File saved to:  {location}")
+            print(f"File saved to:  {location} from {url}")
             print(f"Downloaded {os.path.getsize(file_location)} bytes in {round((end-start), 2)} seconds at a speed of {round((os.path.getsize(file_location))/(end-start), 1)}b/s")
         else:
             print(f"This file already exists, having last been edited at {datetime.datetime.fromtimestamp(os.path.getmtime(file_location))}")
             answer=input("Would you like to overwrite the path[y/N]:  ")
             if answer.lower()=="y":
                 shutil.rmtree(f"{path}/{name}")
-                os.mkdir(f"data/{name}")
-                url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
+                name_space=name.replace(" ", "%20")
+                os.mkdir(f".data/{name}")
+                url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name_space}"
                 start=time.time()
                 urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
                 end=time.time()
-                print(f"File saved to:  {location}")
+                print(f"File saved to:  {location} from {url}")
                 print(f"Downloaded {os.path.getsize(file_location)} bytes in {round((end-start), 2)} seconds at a speed of {round((os.path.getsize(file_location))/(end-start), 1)}b/s")
             elif answer.lower()=="r":
                 pass
@@ -60,25 +68,28 @@ def download(name, ow=False, path="data"):
                 print("Closing program")
                 exit(0)
     else:
-        os.mkdir(f"data/{name}")
-        url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name}"
+        os.mkdir(f".data/{name}")
+        name_space=name.replace(" ", "%20")
+        url=f"https://mcassessor.maricopa.gov/mcs/export/property/?q={name_space}"
         start=time.time()
         urllib.request.urlretrieve(url, f"{path}/{name}/{name}")
         end=time.time()
-        print(f"File saved to:  {location}")
+        print(f"File saved to:  {location} from {url}")
         print(f"Downloaded {os.path.getsize(file_location)} bytes in {round((end-start), 2)} seconds at a speed of {round((os.path.getsize(file_location))/(end-start), 1)}b/s")
 
     
 
-def sift(data):
-    file=open(file_location, "r")
+def sift(data_array):
+    
     line_list=[]
     data_list=[]
-    for (i, line) in enumerate(file):
-        line_upper=line.upper()
-        if data in line_upper and i not in [0, 1]:
-            line_list.append(i)
-    file.close()
+    for data in data_array:
+        file=open(file_location, "r")
+        for (i, line) in enumerate(file):
+            line_upper=line.upper()
+            if data in line_upper and i not in [0, 1]:
+                line_list.append(i)
+        file.close()
     for x in line_list:
         data_list.append(open(file_location, "r").readlines()[x])
     return data_list
@@ -95,15 +106,87 @@ if "-n" in sys.argv:
 else:
     name=input("Please enter a name:  ")
 if "-s" in sys.argv:
-    refine_data=sys.argv[(sys.argv.index("-s"))+1]
+    try:
+        refine_temp=sys.argv[(sys.argv.index("-s"))+1]
+        no_flag=False
+    except IndexError:
+        # The -s flag is empy and also at the end of the file
+        no_flag=True
+    if refine_temp.startswith("-"):
+        if input(f"If you would like to filter with the term\"{refine_temp}\", enter \"y\":  ").lower()=="y":
+            pass
+        else:
+            print("Please ensure that you enter an argument after the flag or atrailing flag might be interpreted as an argument")
+            exit(1)
+    elif no_flag or len(refine_temp)<1:
+        print("Please provide a value for the flag \"-s\"")
+        exit(1)
+    else: no_flag=False
+    refine_data=refine_temp.upper().strip(" ").split(",")
 else:
-    refine_data=input("Data to filter by:  ")
+    refine_temp=input("Data to filter by:  ")
+refine_data=refine_temp.upper().strip(" ").split(",")
 download(name)
-addies=sift(refine_data.upper())
+addies=sift(refine_data)
 save_addies(addies)
 if "-p" in sys.argv:
+    print("Raw Data:")
+    for x in addies:    print(f"\t{x}", end="")
     print()
-    for x in addies:    print(x, end="")
+if "-c" in sys.argv:
+    try:
+        map_arg=sys.argv[(sys.argv.index("-c"))+1]
+        no_flag=False
+    except IndexError:
+        # The -c flag is empy and also at the end of the file
+        no_flag=True
+    if no_flag or len(map_arg)<1 or map_arg.startswith("-"):
+        map_arg="osm"
 
+    else: no_flag=False
+    if map_arg=="gm" or map_arg=="gsm": #doing this becuase when testing I always did gsm fo r some reason and it caused me many headaches
+        wb="https://www.google.com/maps/place/"
+        wb_name="Google Maps"
+    elif map_arg=="ge":
+        wb="https://earth.google.com/web/search/"
+        wb_name="Google Earth"
 
+    else:
+        wb="https://www.openstreetmap.org/search?query="
+        wb_name="Open Street Maps"
+    import webbrowser
+    addresses=[]
+    for line in addies:
+        address=""
+        x=0
+        for char in line:
+            if x>1 and x<5:
+                address=address+char
+            if char==",":
+                x+=1
+        addresses.append(address[0: -1]) #append the address without the trailing comma because 
+    choosing=True
+    if len(addresses)<1:
+        print("There were no results after filtering")
+        exit(0)
+    print(f"Opening in: {wb_name}")
+    while choosing:
+        i=0
+        for addy in addresses:
+            i+=1
+            print(f"{i} : {addy}")
+        choice=input("Choose the address to open or enter (0) to quit\n")
+        try:
+            int(choice)
+        except ValueError:
+            print("\033[1;37;41mMan just choose an actual option\033[0m")
+            exit(69420)
+        if int(choice)==0 or choice =="q":
+            choosing=False
+        else:
+            choice_real=int(choice)-1
+            try:
+                webbrowser.open(f"{wb}{addresses[choice_real]}")
+            except IndexError:
+                print("\033[1;37;41mCHOOSE AN ACTUAL OPTION\033[0m")
 
