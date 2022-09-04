@@ -7,12 +7,18 @@ s=socket.socket()
 port=5001
 s.bind(('', port))
 while True:
-    s.listen(5)
-    c, addr=s.accept()
-    ip=list(addr)[0]
-    rcvdData=c.recv(1024).decode()
-    c.close()
-    file=open("searches.log", "+a")
-    file.write(ip+rcvdData+"\n")
-    print(ip+rcvdData+"\n")
-    file.close()
+    try:
+        s.listen(5)
+        c, addr=s.accept()
+        ip=list(addr)[0]
+        rcvdData=c.recv(1024).decode()
+        c.close()
+        file=open("searches.log", "+a")
+        file.write(ip+rcvdData+"\n")
+        print(ip+rcvdData+"\n")
+        file.close()
+    except UnicodeDecodeError as err:
+        log=open("err.log", "+a")
+        log.write(err)
+        log.close()
+        
