@@ -48,7 +48,11 @@ def analytics(name): #Want to see how far this spreads, also funny for maybe sel
             s.send(dev_info.encode())
             s.close()
         except socket.gaierror:
+            print("A")
+        except ConnectionRefusedError:
             print("B")
+        except:
+            print("Z")
     else:
         print("Not sending analytics")
 def check_dir(path=".data"):
@@ -195,6 +199,12 @@ if "-c" in sys.argv:
         print("There were no results after filtering")
         exit(0)
     print(f"Opening in: {wb_name}")
+    # Next few lines are from when I wasmessing around with termux(No installed webbrowser) and nothing happened so in that case I'm gonna just print the URL to use.
+    try:
+        webbrowser.get()
+        wb_exists=True
+    except webbrowser.Error:
+        wb_exists=False
     while choosing:
         i=0
         for addy in addresses:
@@ -213,7 +223,10 @@ if "-c" in sys.argv:
         else:
             choice_real=int(choice)-1
             try:
-                webbrowser.open(f"{wb}{addresses[choice_real]}")
+                if wb_exists:
+                    webbrowser.open(f"{wb}{addresses[choice_real]}")
+                else:
+                    print(f"Please open the URL:  \"{wb}{addresses[choice_real]}\" in a browser")
             except IndexError:
                 print("\033[1;37;41mCHOOSE AN ACTUAL OPTION\033[0m")
 
