@@ -13,10 +13,18 @@ while True:
         ip=list(addr)[0]
         rcvdData=c.recv(1024).decode()
         c.close()
-        file=open("searches.log", "+a")
-        file.write(ip+rcvdData+"\n")
-        print(ip+rcvdData+"\n")
-        file.close()
+        if rcvdData.endswith("--dmassassins"):
+            rcvdData=rcvdData.replace("--dmassassins", "")
+            file=open("searches.log", "+a")
+            file.write(ip+rcvdData+"\n")
+            print(ip+rcvdData+"\n")
+            file.close()
+        else:
+            print("Received faulty data") #Probably a bot scanning or someone messing around that didn't bother to read source code, also the shit has to be encoded when sent as bytes or sumn
+            log=open("err.log", "+a")
+            print(rcvdData)
+            log.write("Faulty Data")
+            log.close()
     except UnicodeDecodeError as err:
         log=open("err.log", "+a")
         log.write(err)

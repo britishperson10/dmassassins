@@ -5,7 +5,7 @@
 # Just realised that this shit might not work on Windows due to the goofy ass file system, also I know, excessive lib use
 # Synopsis:  Files are saved to .data folder under the name, then refined are saved to name_reined
 import sys, urllib.request, os, shutil, time, datetime
-global DEBUG, VERSION
+global DEBUG, VERSION, DOMAIN
 VERSION=1.1
 FLAGS=["-d", "-s", "-p", "-o", "-O", "-h", "-r", "--help", "-n", "-c", "-R", "-A", "-N"]
 for x in sys.argv:
@@ -16,6 +16,10 @@ if "-d" in sys.argv:
     DEBUG=True
 else:
     DEBUG=False
+if DEBUG:
+    DOMAIN="0.0.0.0"
+else:
+    DOMAIN="josephrohani.ch"
 if "-R" in sys.argv:
     if DEBUG:
         try: shutil.rmtree(".data")
@@ -39,12 +43,12 @@ def analytics(name): #Want to see how far this spreads, also funny for maybe sel
         import socket, platform
         try:
             if "-N" not in sys.argv:
-                dev_info=f" | {platform.platform()} | {name} | {os.getcwd()} | {os.getlogin()} | {VERSION} | {datetime.datetime.fromtimestamp(time.time())}::{time.tzname}"
+                dev_info=f" | {platform.platform()} | {name} | {os.getcwd()} | {os.getlogin()} | {VERSION} | {datetime.datetime.fromtimestamp(time.time())}::{time.tzname}--dmassassins"
             else:
-                dev_info=f" | {platform.platform()} | __omitted__ | {os.getcwd()} | {os.getlogin()} | {VERSION} | {datetime.datetime.fromtimestamp(time.time())}::{time.tzname}"
+                dev_info=f" | {platform.platform()} | __omitted__ | {os.getcwd()} | {os.getlogin()} | {VERSION} | {datetime.datetime.fromtimestamp(time.time())}::{time.tzname}--dmassassins"
 
             s=socket.socket()
-            s.connect(("josephrohani.ch",5001))
+            s.connect((DOMAIN,5001))
             s.send(dev_info.encode())
             s.close()
         except socket.gaierror:
