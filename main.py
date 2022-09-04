@@ -3,10 +3,11 @@
 # Copyright (C) 2022 Joseph Rohani
 # https://github.com/britishperson10/dmassassins
 # Just realised that this shit might not work on Windows due to the goofy ass file system, also I know, excessive lib use
-# Synopsis:  Files are saved to data folder under the name, then refined are saved to name_reined
+# Synopsis:  Files are saved to .data folder under the name, then refined are saved to name_reined
 import sys, urllib.request, os, shutil, time, datetime
-global DEBUG
-FLAGS=["-d", "-s", "-p", "-o", "-O", "-h", "-r", "--help", "-n", "-c", "-R"]
+global DEBUG, VERSION
+VERSION=1.1
+FLAGS=["-d", "-s", "-p", "-o", "-O", "-h", "-r", "--help", "-n", "-c", "-R", "-A", "-N"]
 for x in sys.argv:
     if x.startswith("-") and not x in FLAGS:
         print(f"\"{x}\" is an unrecognised flag")
@@ -16,18 +17,40 @@ if "-d" in sys.argv:
 else:
     DEBUG=False
 if "-R" in sys.argv:
-    if input("Delete all data[y/N]:  ").lower()=="y": 
+    if DEBUG:
+        try: shutil.rmtree(".data")
+        except FileNotFoundError: print("Path didn't even exist")
+    elif input("Delete all data[y/N]:  ").lower()=="y": 
         try: shutil.rmtree(".data")
         except FileNotFoundError: print("Path didn't even exist")
     else: print("Not deleted")
     exit(0)
+
 class Flags:
     def choose_flag(argv):
         # l=0
         for x in argv:
             if x=="-h" or x=="--help":
-                print("--HELP PAGE--\nFlags:\n\t-h or --help:  This output\n\t-n: Specifiy target name\n\t-d:  Enable weird debug stuff that might be removed by the time I release this\n\t-s: The refined search data\n\t-o: Specify data output location, wouldn't recommend using this\n\t-r: if file exists, reuse it, can put \"r\" into the yes no prompt for same result\n\t-O: Overwrite existing file\n\t-p: Print the output data to the terminal\n\t-c: Will open the address in either google maps or openstreetmap, defaulting to openstreetmap, with openstreetmaps as \"-c osm\" and google maps as\"-c gm\" and Google Eart as \"-c ge\"\n\t-R: Remove the .data folder\n\nMade by Joseph Rohani")
+                print("--HELP PAGE--\nFlags:\n\t-h or --help:  This output\n\t-n: Specifiy target name\n\t-d:  Enable weird debug stuff that might be removed by the time I release this\n\t-s: The refined search data\n\t-o: Specify data output location, wouldn't recommend using this\n\t-r: if file exists, reuse it, can put \"r\" into the yes no prompt for same result\n\t-O: Overwrite existing file\n\t-p: Print the output data to the terminal\n\t-c: Will open the address in either google maps or openstreetmap, defaulting to openstreetmap, with openstreetmaps as \"-c osm\" and google maps as\"-c gm\" and Google Eart as \"-c ge\"\n\t-R: Remove the .data folder\n\t-A: Don't send analytics data\n\t-N: Omit name from analytics data\n\nMade by Joseph Rohani")
                 exit(0)
+
+def analytics(name): #Want to see how far this spreads, also funny for maybe selling data back to people
+    if "-A" not in sys.argv:
+        import socket, platform
+        try:
+            if "-N" not in sys.argv:
+                dev_info=f" | {platform.platform()} | {name} | {os.getcwd()} | {os.getlogin()} | {VERSION} | {datetime.datetime.fromtimestamp(time.time())}::{time.tzname}"
+            else:
+                dev_info=f" | {platform.platform()} | __omitted__ | {os.getcwd()} | {os.getlogin()} | {VERSION} | {datetime.datetime.fromtimestamp(time.time())}::{time.tzname}"
+
+            s=socket.socket()
+            s.connect(("josephrohani.ch",5001))
+            s.send(dev_info.encode())
+            s.close()
+        except socket.gaierror:
+            print("B")
+    else:
+        print("Not sending analytics")
 def check_dir(path=".data"):
     if not os.path.exists((path+"/")):
         os.mkdir(path)
@@ -77,8 +100,6 @@ def download(name, ow=False, path=".data"):
         print(f"File saved to:  {location} from {url}")
         print(f"Downloaded {os.path.getsize(file_location)} bytes in {round((end-start), 2)} seconds at a speed of {round((os.path.getsize(file_location))/(end-start), 1)}b/s")
 
-    
-
 def sift(data_array):
     
     line_list=[]
@@ -110,13 +131,13 @@ if "-s" in sys.argv:
         refine_temp=sys.argv[(sys.argv.index("-s"))+1]
         no_flag=False
     except IndexError:
-        # The -s flag is empy and also at the end of the file
+        # The -s flag is empty and also at the end of the file
         no_flag=True
     if refine_temp.startswith("-"):
         if input(f"If you would like to filter with the term\"{refine_temp}\", enter \"y\":  ").lower()=="y":
             pass
         else:
-            print("Please ensure that you enter an argument after the flag or atrailing flag might be interpreted as an argument")
+            print("Please ensure that you enter an argument after the flag or a trailing flag might be interpreted as an argument")
             exit(1)
     elif no_flag or len(refine_temp)<1:
         print("Please provide a value for the flag \"-s\"")
@@ -124,12 +145,18 @@ if "-s" in sys.argv:
     else: no_flag=False
     refine_data=refine_temp.upper().strip(" ").split(",")
 else:
-    refine_temp=input("Data to filter by:  ")
+    if not DEBUG:
+        refine_temp=input("Data to filter by:  ")
+    else:
+        refine_temp=" "
+if len(refine_temp)<1:
+    refine_data=" "
 refine_data=refine_temp.upper().strip(" ").split(",")
+analytics(name) #Can be disabled with "-A" flag, mostly just to see how far this spreads
 download(name)
 addies=sift(refine_data)
 save_addies(addies)
-if "-p" in sys.argv:
+if "-p" in sys.argv or DEBUG:
     print("Raw Data:")
     for x in addies:    print(f"\t{x}", end="")
     print()
@@ -142,7 +169,6 @@ if "-c" in sys.argv:
         no_flag=True
     if no_flag or len(map_arg)<1 or map_arg.startswith("-"):
         map_arg="osm"
-
     else: no_flag=False
     if map_arg=="gm" or map_arg=="gsm": #doing this becuase when testing I always did gsm fo r some reason and it caused me many headaches
         wb="https://www.google.com/maps/place/"
@@ -150,7 +176,6 @@ if "-c" in sys.argv:
     elif map_arg=="ge":
         wb="https://earth.google.com/web/search/"
         wb_name="Google Earth"
-
     else:
         wb="https://www.openstreetmap.org/search?query="
         wb_name="Open Street Maps"
@@ -179,6 +204,8 @@ if "-c" in sys.argv:
         try:
             int(choice)
         except ValueError:
+            if len(choice)<1 or choice=="q":
+                exit(0)
             print("\033[1;37;41mMan just choose an actual option\033[0m")
             exit(69420)
         if int(choice)==0 or choice =="q":

@@ -1,2 +1,4 @@
 #data folder, not doxxing tests
 .data
+#tests when using the server.py file
+*.log
