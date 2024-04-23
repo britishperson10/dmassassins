@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 # September 03, 2022
 # Copyright (C) 2022 Joseph Rohani
 # https://github.com/britishperson10/dmassassins
